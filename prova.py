@@ -1,49 +1,57 @@
-#Sistema de Gestão de Pet Shop
-#Trabalho de POO - Python
+"""
+=============================================================
+SISTEMA DE GESTÃO DE PET SHOP
+Disciplina: Programação Orientada a Objetos (POO)
+Linguagem: Python 3
+=============================================================
 
-#Problema real resolvido:
-#Um pet shop precisa cadastrar clientes e animais, agendar serviços
-#(banho, tosa, consulta) e calcular automaticamente o valor cobrado
-#de acordo com o tipo e o porte do animal, além de saber o
-#faturamento total.
+PROBLEMA REAL RESOLVIDO:
+Um pet shop precisa cadastrar clientes e animais, agendar
+serviços (banho, tosa, consulta) e calcular automaticamente
+o valor cobrado de acordo com a espécie e o porte do animal,
+além de registrar o faturamento total.
 
-#Conceitos de POO aplicados:
-#- Abstração: classe abstrata Animal define o "contrato" que toda
-#  espécie precisa cumprir (não é possível instanciar Animal direto).
-# - Herança: Cachorro, Gato e Ave herdam de Animal.
-# - Polimorfismo: cada subclasse calcula a taxa de serviço de um jeito
-#      próprio, mas é chamada sempre da mesma forma (animal.calcular_taxa_servico(...)).
-#    - Encapsulamento: atributos privados (_nome, _idade, _peso, _telefone)
-#      acessados/validados por @property e @setter.
-#    - Composição: Agendamento "tem um" Cliente e "tem um" Animal.
-# """
+CONCEITOS DE POO APLICADOS:
+- Abstração    : classe abstrata Animal (não pode ser instanciada)
+- Herança      : Cachorro, Gato e Ave herdam de Animal
+- Polimorfismo : cada subclasse calcula a taxa do serviço do seu jeito
+- Encapsulamento: atributos privados com @property e @setter
+- Composição   : Agendamento "tem um" Cliente e "tem um" Animal
+"""
 
-from abc import ABC, abstractmethod
-import json
-import os
+# ── Bibliotecas padrão do Python (não precisa instalar nada) ──────────────────
+from abc import ABC, abstractmethod   # para criar classes e métodos abstratos
+import json                            # para salvar/ler dados em arquivo .json
+import os                              # para verificar se o arquivo já existe
 
 
-# ---------------------------------------------------------------------------
-# ABSTRAÇÃO + ENCAPSULAMENTO
-# ---------------------------------------------------------------------------
-class Animal(ABC): #Classe abstrata que representa um animal cadastrado no pet shop
+# ══════════════════════════════════════════════════════════════════════════════
+#  ABSTRAÇÃO + ENCAPSULAMENTO
+#  Animal é uma classe ABSTRATA: serve como "molde" para as subclasses.
+#  Não é possível fazer Animal() diretamente — só Cachorro(), Gato(), Ave().
+# ══════════════════════════════════════════════════════════════════════════════
+class Animal(ABC):
+    """Classe abstrata que representa um animal cadastrado no pet shop."""
 
-    especie = "Animal"  # cada subclasse sobrescreve
+    especie = "Animal"  # cada subclasse vai sobrescrever esse valor
 
     def __init__(self, nome: str, idade: int, peso: float):
-        self.nome = nome   # passa pelo setter -> validação
+        # Os setters abaixo já fazem a validação dos dados
+        self.nome  = nome
         self.idade = idade
-        self.peso = peso
+        self.peso  = peso
 
+    # @property: permite ler o atributo como se fosse público
     @property
     def nome(self):
         return self._nome
 
+    # @setter: valida o valor antes de guardar no atributo privado _nome
     @nome.setter
     def nome(self, valor):
         if not valor or not valor.strip():
             raise ValueError("o nome do animal não pode ser vazio")
-        self._nome = valor.strip().title()
+        self._nome = valor.strip().title()  
 
     @property
     def idade(self):
@@ -67,7 +75,7 @@ class Animal(ABC): #Classe abstrata que representa um animal cadastrado no pet s
             raise ValueError("o peso deve ser maior que zero")
         self._peso = valor
 
-    # ---- métodos abstratos: cada subclasse é obrigada a implementar ----
+    #Métodos abstratos: cada subclasse É OBRIGADA a implementar
     @abstractmethod
     def calcular_taxa_servico(self, servico: str) -> float:
         """Retorna o valor cobrado por um serviço para este animal."""
@@ -79,13 +87,16 @@ class Animal(ABC): #Classe abstrata que representa um animal cadastrado no pet s
     def descricao(self) -> str:
         return f"{self.nome} ({self.especie}, {self.idade} anos, {self.peso}kg)"
 
-    def _str_(self):
+    def __str__(self):
         return self.descricao()
 
 
-# ---------------------------------------------------------------------------
-# HERANÇA + POLIMORFISMO
-# ---------------------------------------------------------------------------
+# ══════════════════════════════════════════════════════════════════════════════
+#  HERANÇA + POLIMORFISMO
+#  Cachorro, Gato e Ave herdam de Animal e implementam os métodos abstratos
+#  cada uma do seu jeito — isso é polimorfismo.
+# ══════════════════════════════════════════════════════════════════════════════
+
 class Cachorro(Animal):
     especie = "Cachorro"
     TAXAS = {"banho": 40.0, "tosa": 35.0, "consulta": 80.0}
@@ -96,7 +107,7 @@ class Cachorro(Animal):
             raise ValueError(f"serviço '{servico}' não existe para cachorros")
         valor = self.TAXAS[servico]
         if servico in ("banho", "tosa") and self.peso > 20:
-            valor += 15.0  # cão grande dá mais trabalho
+            valor += 15.0
         return valor
 
     def emitir_som(self) -> str:
@@ -111,7 +122,7 @@ class Gato(Animal):
         servico = servico.lower().strip()
         if servico not in self.TAXAS:
             raise ValueError(f"serviço '{servico}' não existe para gatos")
-        return self.TAXAS[servico]
+        return self.TAXAS[servico]  
 
     def emitir_som(self) -> str:
         return "Miau!"
@@ -131,12 +142,13 @@ class Ave(Animal):
         return "Piu piu!"
 
 
-# ---------------------------------------------------------------------------
-# ENCAPSULAMENTO
-# ---------------------------------------------------------------------------
+# ══════════════════════════════════════════════════════════════════════════════
+#  ENCAPSULAMENTO
+#  Cliente também usa atributos privados com validação via @property
+# ══════════════════════════════════════════════════════════════════════════════
 class Cliente:
-    def _init_(self, nome: str, telefone: str):
-        self.nome = nome
+    def __init__(self, nome: str, telefone: str):
+        self.nome     = nome
         self.telefone = telefone
 
     @property
@@ -160,49 +172,51 @@ class Cliente:
             raise ValueError("telefone inválido (use ao menos 8 números)")
         self._telefone = valor.strip()
 
-    def _str_(self):
+    def __str__(self):
         return f"{self.nome} (tel: {self.telefone})"
 
 
-# ---------------------------------------------------------------------------
-# COMPOSIÇÃO: Agendamento "tem um" Cliente e "tem um" Animal
-# ---------------------------------------------------------------------------
+# ══════════════════════════════════════════════════════════════════════════════
+#  COMPOSIÇÃO
+#  Agendamento NÃO herda de Cliente nem de Animal.
+#  Ele "tem um" Cliente e "tem um" Animal como atributos — isso é composição.
+# ══════════════════════════════════════════════════════════════════════════════
 class Agendamento:
-    def _init_(self, cliente: Cliente, animal: Animal, servico: str, data: str):
+    def __init__(self, cliente: Cliente, animal: Animal, servico: str, data: str):
         self.cliente = cliente
-        self.animal = animal
+        self.animal  = animal
         self.servico = servico.lower().strip()
-        self.data = data
-        # polimorfismo em ação: cada animal calcula sua própria taxa
+        self.data    = data
         self.valor = animal.calcular_taxa_servico(self.servico)
 
     def to_dict(self) -> dict:
         return {
-            "cliente": self.cliente.nome,
+            "cliente" : self.cliente.nome,
             "telefone": self.cliente.telefone,
-            "animal": self.animal.nome,
-            "especie": self.animal.especie,
-            "servico": self.servico,
-            "data": self.data,
-            "valor": self.valor,
+            "animal"  : self.animal.nome,
+            "especie" : self.animal.especie,
+            "servico" : self.servico,
+            "data"    : self.data,
+            "valor"   : self.valor,
         }
 
-    def _str_(self):
+    def __str__(self):
         return (f"[{self.data}] {self.servico.title()} para {self.animal.nome} "
                 f"({self.cliente.nome}) - R$ {self.valor:.2f}")
 
 
-# ---------------------------------------------------------------------------
-# CLASSE PRINCIPAL: orquestra tudo e cuida da persistência em JSON
-# ---------------------------------------------------------------------------
+# ══════════════════════════════════════════════════════════════════════════════
+#  CLASSE PRINCIPAL
+#  PetShop orquestra tudo: mantém as listas de clientes, animais e
+# ══════════════════════════════════════════════════════════════════════════════
 class PetShop:
-    ARQUIVO_DADOS = "agendamentos.json"
+    ARQUIVO_DADOS = "agendamentos.json"  
 
-    def _init_(self, nome: str):
-        self.nome = nome
-        self.clientes: list[Cliente] = []
-        self.animais: list[Animal] = []
-        self.agendamentos: list[Agendamento] = []
+    def __init__(self, nome: str):
+        self.nome         = nome
+        self.clientes     : list[Cliente]     = []
+        self.animais      : list[Animal]      = []
+        self.agendamentos : list[Agendamento] = []
 
     def cadastrar_cliente(self, nome: str, telefone: str) -> Cliente:
         cliente = Cliente(nome, telefone)
@@ -212,11 +226,11 @@ class PetShop:
     def cadastrar_animal(self, especie: str, nome: str, idade, peso) -> Animal:
         especie_norm = especie.lower().strip()
         classes = {
-            "cachorro": Cachorro,
-            "gato": Gato,
-            "ave": Ave,
-            "passaro": Ave,
-            "pássaro": Ave,
+            "cachorro" : Cachorro,
+            "gato"     : Gato,
+            "ave"      : Ave,
+            "passaro"  : Ave,
+            "pássaro"  : Ave,
         }
         if especie_norm not in classes:
             raise ValueError("espécie não suportada (use cachorro, gato ou ave)")
@@ -224,13 +238,15 @@ class PetShop:
         self.animais.append(animal)
         return animal
 
-    def agendar_servico(self, cliente: Cliente, animal: Animal, servico: str, data: str) -> Agendamento:
+    def agendar_servico(self, cliente: Cliente, animal: Animal,
+                        servico: str, data: str) -> Agendamento:
         agendamento = Agendamento(cliente, animal, servico, data)
         self.agendamentos.append(agendamento)
-        self._salvar_dados()
+        self._salvar_dados()  
         return agendamento
 
     def faturamento_total(self) -> float:
+        """Soma o valor de todos os agendamentos da sessão atual."""
         return sum(a.valor for a in self.agendamentos)
 
     def _salvar_dados(self):
@@ -239,7 +255,6 @@ class PetShop:
             json.dump(dados, f, ensure_ascii=False, indent=2)
 
     def carregar_historico(self) -> list[dict]:
-        """Lê o histórico salvo em disco (apenas leitura, não recria objetos)."""
         if os.path.exists(self.ARQUIVO_DADOS):
             with open(self.ARQUIVO_DADOS, "r", encoding="utf-8") as f:
                 try:
@@ -249,9 +264,10 @@ class PetShop:
         return []
 
 
-# ---------------------------------------------------------------------------
-# INTERFACE DE LINHA DE COMANDO (CLI)
-# ---------------------------------------------------------------------------
+# ══════════════════════════════════════════════════════════════════════════════
+#  INTERFACE DE LINHA DE COMANDO (CLI)
+# ══════════════════════════════════════════════════════════════════════════════
+
 def escolher_da_lista(lista, rotulo, rotulo_plural):
     if not lista:
         print(f"Nenhum {rotulo} cadastrado ainda.")
@@ -290,17 +306,17 @@ def menu():
 
         try:
             if escolha == "1":
-                nome = input("Nome do cliente: ")
+                nome     = input("Nome do cliente: ")
                 telefone = input("Telefone do cliente: ")
-                cliente = petshop.cadastrar_cliente(nome, telefone)
+                cliente  = petshop.cadastrar_cliente(nome, telefone)
                 print(f"-> Cliente cadastrado: {cliente}")
 
             elif escolha == "2":
                 especie = input("Espécie (cachorro/gato/ave): ")
-                nome = input("Nome do animal: ")
-                idade = input("Idade (anos): ")
-                peso = input("Peso (kg): ")
-                animal = petshop.cadastrar_animal(especie, nome, idade, peso)
+                nome    = input("Nome do animal: ")
+                idade   = input("Idade (anos): ")
+                peso    = input("Peso (kg): ")
+                animal  = petshop.cadastrar_animal(especie, nome, idade, peso)
                 print(f"-> Animal cadastrado: {animal} | som: {animal.emitir_som()}")
 
             elif escolha == "3":
@@ -311,9 +327,9 @@ def menu():
                 if not animal:
                     continue
                 servico = input("Serviço (banho/tosa/consulta): ")
-                data = input("Data (dd/mm/aaaa): ")
-                agendamento = petshop.agendar_servico(cliente, animal, servico, data)
-                print(f"-> Agendamento criado: {agendamento}")
+                data    = input("Data (dd/mm/aaaa): ")
+                ag      = petshop.agendar_servico(cliente, animal, servico, data)
+                print(f"-> Agendamento criado: {ag}")
 
             elif escolha == "4":
                 if not petshop.agendamentos:
@@ -322,7 +338,8 @@ def menu():
                     print(ag)
 
             elif escolha == "5":
-                print(f"Faturamento total (sessão atual): R$ {petshop.faturamento_total():.2f}")
+                print(f"Faturamento total (sessão atual): "
+                      f"R$ {petshop.faturamento_total():.2f}")
 
             elif escolha == "6":
                 historico = petshop.carregar_historico()
@@ -330,8 +347,8 @@ def menu():
                     print("Nenhum histórico salvo ainda.")
                 for item in historico:
                     print(f"[{item['data']}] {item['servico'].title()} - "
-                          f"{item['animal']} ({item['especie']}) / {item['cliente']} "
-                          f"- R$ {item['valor']:.2f}")
+                          f"{item['animal']} ({item['especie']}) / "
+                          f"{item['cliente']} - R$ {item['valor']:.2f}")
 
             elif escolha == "0":
                 print("Até logo!")
@@ -344,5 +361,6 @@ def menu():
             print(f"Erro: {e}")
 
 
-if __name__ == "_main_":
+# ── Ponto de entrada do programa ──────────────────────────────────────────────
+if __name__ == "__main__":
     menu()
